@@ -13,15 +13,36 @@ type ServerSideProps = {
 const Slug: NextPage<ServerSideProps> = ({ paragraph }) => {
   const [paragraphArray, setParagraphArray] = useState<string[]>([]);
   const [userInput, setUserInput] = useState<string>("");
+  const [userWpm, setUserWpm] = useState<number>();
+  const [userAccuracy, setUserAccuracy] = useState<string>();
+  const [isTestCompleted, setIsTestCompleted] = useState<boolean>(false);
 
   useEffect(() => {
     let temp = paragraph.content;
     setParagraphArray(temp.split(""));
   }, [paragraph]);
 
+  const timerEndCallbackFn = () => {
+    setIsTestCompleted(true);
+    const tempUserInputArr = userInput.split(" ");
+    const tempPara = paragraph.content.split(" ");
+    tempPara.slice(tempUserInputArr.length);
+    let mismatchCount = 0;
+
+    for (let i = 0; i < tempUserInputArr.length; i++) {
+      if (tempUserInputArr[i] !== tempPara[i]) {
+        mismatchCount++;
+      }
+    }
+    let rightWords = tempUserInputArr.length - mismatchCount;
+    let accuracy = (rightWords * 100) / tempUserInputArr.length;
+    setUserAccuracy(accuracy.toString());
+    setUserWpm(rightWords);
+  };
+
   return (
     <div>
-      <Timer timeInSeconds={60} />
+      <Timer timeInSeconds={60} timerEndCallbackFn={timerEndCallbackFn} />
       {paragraphArray.map((character, key) => {
         return (
           <span
@@ -45,6 +66,11 @@ const Slug: NextPage<ServerSideProps> = ({ paragraph }) => {
         }
         hidden={true}
       />
+      {isTestCompleted && (
+        <p>
+          Your result: {userWpm} with accuracy: {userAccuracy} %
+        </p>
+      )}
     </div>
   );
 };
