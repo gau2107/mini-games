@@ -1,6 +1,7 @@
 import TextInput from "@/components/common/TextInput";
 import Timer from "@/components/common/Timer";
 import { GetServerSideProps, NextPage } from "next";
+import { useRouter } from "next/router";
 import { ChangeEvent, useEffect, useState } from "react";
 type Paragraph = {
   id: number;
@@ -10,12 +11,24 @@ type ServerSideProps = {
   paragraph: Paragraph;
 };
 
+type QueryParams = {
+  slug: string;
+};
+
 const Slug: NextPage<ServerSideProps> = ({ paragraph }) => {
+  const router = useRouter();
+  const [timeInSeconds, setTimeInSeconds] = useState<number | null>(null);
   const [paragraphArray, setParagraphArray] = useState<string[]>([]);
   const [userInput, setUserInput] = useState<string>("");
   const [userWpm, setUserWpm] = useState<number>();
   const [userAccuracy, setUserAccuracy] = useState<string>();
   const [isTestCompleted, setIsTestCompleted] = useState<boolean>(false);
+
+  useEffect(() => {
+    const { slug } = router.query as QueryParams;
+    let val = parseInt(slug[0]) * 60;
+    setTimeInSeconds(val);
+  }, []);
 
   useEffect(() => {
     let temp = paragraph.content;
@@ -35,14 +48,17 @@ const Slug: NextPage<ServerSideProps> = ({ paragraph }) => {
       }
     }
     let rightWords = tempUserInputArr.length - mismatchCount;
-    let accuracy = (rightWords * 100) / tempUserInputArr.length;
+    let accuracy = ((rightWords * 100) / tempUserInputArr.length).toFixed(2);
     setUserAccuracy(accuracy.toString());
     setUserWpm(rightWords);
   };
 
   return (
     <div>
-      <Timer timeInSeconds={60} timerEndCallbackFn={timerEndCallbackFn} />
+      <Timer
+        timeInSeconds={timeInSeconds}
+        timerEndCallbackFn={timerEndCallbackFn}
+      />
       {paragraphArray.map((character, key) => {
         return (
           <span
